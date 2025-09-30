@@ -13,7 +13,7 @@ import (
 // Rows implements the database/sql/driver.Rows interface
 type Rows struct {
 	columns []string
-	rows    [][]interface{}
+	rows    [][]any
 	pos     int
 }
 
@@ -88,8 +88,8 @@ func (r *Rows) ColumnTypeScanType(index int) reflect.Type {
 		}
 	}
 
-	// Default to interface{} if we can't determine the type
-	return reflect.TypeOf((*interface{})(nil)).Elem()
+	// Default to any if we can't determine the type
+	return reflect.TypeOf((*any)(nil)).Elem()
 }
 
 // ColumnTypeDatabaseTypeName implements driver.RowsColumnTypeDatabaseTypeName
@@ -155,8 +155,8 @@ func (r *Rows) ColumnTypePrecisionScale(index int) (precision, scale int64, ok b
 	return 0, 0, false
 }
 
-// convertInterfaceToDriverValue converts an interface{} value to a driver.Value
-func convertInterfaceToDriverValue(value interface{}) driver.Value {
+// convertInterfaceToDriverValue converts an any value to a driver.Value
+func convertInterfaceToDriverValue(value any) driver.Value {
 	if value == nil {
 		return nil
 	}

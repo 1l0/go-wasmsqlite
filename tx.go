@@ -16,7 +16,7 @@ type Tx struct {
 
 // Commit implements driver.Tx
 func (tx *Tx) Commit() error {
-	if tx.conn.adapter == nil {
+	if tx.conn.api == nil {
 		return driver.ErrBadConn
 	}
 
@@ -24,7 +24,7 @@ func (tx *Tx) Commit() error {
 		return ErrTxDone
 	}
 
-	err := tx.conn.adapter.Commit()
+	err := tx.conn.api.Commit()
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func (tx *Tx) Commit() error {
 
 // Rollback implements driver.Tx
 func (tx *Tx) Rollback() error {
-	if tx.conn.adapter == nil {
+	if tx.conn.api == nil {
 		return driver.ErrBadConn
 	}
 
@@ -43,7 +43,7 @@ func (tx *Tx) Rollback() error {
 		return ErrTxDone
 	}
 
-	err := tx.conn.adapter.Rollback()
+	err := tx.conn.api.Rollback()
 	if err != nil {
 		return err
 	}

@@ -22,7 +22,7 @@ const (
 func GetVFSType(conn *sql.Conn) (VFSType, error) {
 	var vfsType VFSType
 
-	err := conn.Raw(func(driverConn interface{}) error {
+	err := conn.Raw(func(driverConn any) error {
 		c, ok := driverConn.(*Conn)
 		if !ok {
 			return fmt.Errorf("not a wasmsqlite connection")
@@ -53,7 +53,7 @@ func DumpDatabase(db *sql.DB) (string, error) {
 	defer conn.Close()
 
 	var dump string
-	err = conn.Raw(func(driverConn interface{}) error {
+	err = conn.Raw(func(driverConn any) error {
 		c, ok := driverConn.(*Conn)
 		if !ok {
 			return fmt.Errorf("not a wasmsqlite connection")
@@ -86,7 +86,7 @@ func LoadDatabase(db *sql.DB, dump string) error {
 	}
 	defer conn.Close()
 
-	err = conn.Raw(func(driverConn interface{}) error {
+	err = conn.Raw(func(driverConn any) error {
 		c, ok := driverConn.(*Conn)
 		if !ok {
 			return fmt.Errorf("not a wasmsqlite connection")

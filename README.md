@@ -209,7 +209,7 @@ conn, _ := db.Conn(context.Background())
 defer conn.Close()
 
 var vfsType wasmsqlite.VFSType
-conn.Raw(func(driverConn interface{}) error {
+conn.Raw(func(driverConn any) error {
     c := driverConn.(*wasmsqlite.Conn)
     vfsType = c.GetVFSType()
     return nil
@@ -226,11 +226,11 @@ case wasmsqlite.VFSTypeMemory:
 ## Browser Compatibility
 
 | Browser | Minimum Version | OPFS Support |
-|---------|----------------|--------------|
-| Chrome  | 102+          | ✅ Full      |
-| Edge    | 102+          | ✅ Full      |
-| Firefox | 111+          | ✅ Full      |
-| Safari  | 15.2+         | ✅ Full      |
+| ------- | --------------- | ------------ |
+| Chrome  | 102+            | ✅ Full       |
+| Edge    | 102+            | ✅ Full       |
+| Firefox | 111+            | ✅ Full       |
+| Safari  | 15.2+           | ✅ Full       |
 
 ## Database Migrations with golang-migrate
 

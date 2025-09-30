@@ -15,6 +15,9 @@ import (
 
 // Options represents configuration options for opening a wasmsqlite database
 type Options struct {
+	// API type (default: "worker")
+	API string
+
 	// File path for the database (default: "/app.db")
 	File string
 
@@ -40,6 +43,7 @@ type Options struct {
 // DefaultOptions returns default options for opening a database
 func DefaultOptions() *Options {
 	return &Options{
+		API:         "worker",
 		File:        "/app.db",
 		VFS:         "opfs",
 		BusyTimeout: 5000,
@@ -63,6 +67,10 @@ func Open(opts *Options) (*sql.DB, error) {
 // buildDSN builds a DSN string from options
 func buildDSN(opts *Options) string {
 	values := url.Values{}
+
+	if opts.API != "" && opts.API != "worker" {
+		values.Set("api", opts.API)
+	}
 
 	if opts.File != "" && opts.File != "/app.db" {
 		values.Set("file", opts.File)
@@ -112,6 +120,10 @@ func parseDSN(dsn string) (*Options, error) {
 	values, err := url.ParseQuery(dsn)
 	if err != nil {
 		return nil, fmt.Errorf("invalid DSN: %w", err)
+	}
+
+	if api := values.Get("api"); api != "" {
+		opts.API = api
 	}
 
 	if file := values.Get("file"); file != "" {
@@ -196,7 +208,7 @@ func initializeSQLiteBridge(bridge js.Value) error {
 	done := make(chan error, 1)
 
 	// Handle promise resolution
-	then := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+	then := js.FuncOf(func(this js.Value, args []js.Value) any {
 		defer func() {
 			if r := recover(); r != nil {
 				done <- fmt.Errorf("promise then handler panicked: %v", r)
@@ -220,7 +232,7 @@ func initializeSQLiteBridge(bridge js.Value) error {
 	defer then.Release()
 
 	// Handle promise rejection
-	catch := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+	catch := js.FuncOf(func(this js.Value, args []js.Value) any {
 		defer func() {
 			if r := recover(); r != nil {
 				done <- fmt.Errorf("promise catch handler panicked: %v", r)

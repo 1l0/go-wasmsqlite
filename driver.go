@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
-	"syscall/js"
 )
 
 func init() {
@@ -39,30 +38,28 @@ func (c *Connector) Connect(ctx context.Context) (driver.Conn, error) {
 		return nil, fmt.Errorf("invalid DSN: %w", err)
 	}
 
-	bridge, err := createWorker(opts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create bridge: %w", err)
+	if opts.API == "worker" || opts.API == "" {
+		// Create bridge worker
+		worker, err := NewAPIWorker()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create bridge adapter: %w", err)
+		}
+
+		// Open database through bridge
+		vfsType, err := worker.Open(opts.File, opts.VFS)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open database: %w", err)
+		}
+
+		return &Conn{
+			api:     worker,
+			vfsType: vfsType,
+		}, nil
+	} else if opts.API == "oo" {
+		// TODO:
 	}
 
-	// Create bridge adapter
-	adapter, err := NewBridgeAdapter()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create bridge adapter: %w", err)
-	}
-
-	// Open database through bridge
-	vfsType, err := adapter.Open(opts.File, opts.VFS)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
-	}
-
-	conn := &Conn{
-		bridge:  bridge,
-		adapter: adapter,
-		vfsType: vfsType,
-	}
-
-	return conn, nil
+	return nil, fmt.Errorf("unsupported API")
 }
 
 // Driver returns the underlying driver
@@ -72,15 +69,14 @@ func (c *Connector) Driver() driver.Driver {
 
 // Conn implements the database/sql/driver.Conn interface
 type Conn struct {
-	bridge  js.Value
-	adapter *BridgeAdapter
+	api     API
 	inTx    bool
 	vfsType string
 }
 
 // Prepare implements driver.Conn
 func (c *Conn) Prepare(query string) (driver.Stmt, error) {
-	if c.adapter == nil {
+	if c.api == nil {
 		return nil, driver.ErrBadConn
 	}
 
@@ -92,10 +88,10 @@ func (c *Conn) Prepare(query string) (driver.Stmt, error) {
 
 // Close implements driver.Conn
 func (c *Conn) Close() error {
-	if c.adapter != nil {
+	if c.api != nil {
 		// Close the database through bridge
-		err := c.adapter.Close()
-		c.adapter = nil
+		err := c.api.Close()
+		c.api = nil
 		return err
 	}
 	return nil
@@ -108,7 +104,7 @@ func (c *Conn) Begin() (driver.Tx, error) {
 
 // BeginTx implements driver.ConnBeginTx
 func (c *Conn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
-	if c.adapter == nil {
+	if c.api == nil {
 		return nil, driver.ErrBadConn
 	}
 
@@ -118,7 +114,7 @@ func (c *Conn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, e
 
 	// SQLite doesn't support read-only transactions or isolation levels in the same way
 	// We'll just start a regular transaction
-	err := c.adapter.Begin()
+	err := c.api.Begin()
 	if err != nil {
 		return nil, err
 	}
@@ -130,17 +126,17 @@ func (c *Conn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, e
 
 // ExecContext implements driver.ExecerContext
 func (c *Conn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
-	if c.adapter == nil {
+	if c.api == nil {
 		return nil, driver.ErrBadConn
 	}
 
-	// Convert params to interface{} slice
-	paramIfaces := make([]interface{}, len(args))
+	// Convert params to any slice
+	paramIfaces := make([]any, len(args))
 	for i, arg := range args {
 		paramIfaces[i] = arg.Value
 	}
 
-	rowsAffected, lastInsertID, err := c.adapter.Exec(query, paramIfaces)
+	rowsAffected, lastInsertID, err := c.api.Exec(query, paramIfaces)
 	if err != nil {
 		return nil, err
 	}
@@ -155,17 +151,17 @@ func (c *Conn) ExecContext(ctx context.Context, query string, args []driver.Name
 
 // QueryContext implements driver.QueryerContext
 func (c *Conn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
-	if c.adapter == nil {
+	if c.api == nil {
 		return nil, driver.ErrBadConn
 	}
 
-	// Convert params to interface{} slice
-	paramIfaces := make([]interface{}, len(args))
+	// Convert params to any slice
+	paramIfaces := make([]any, len(args))
 	for i, arg := range args {
 		paramIfaces[i] = arg.Value
 	}
 
-	columns, rows, err := c.adapter.Query(query, paramIfaces)
+	columns, rows, err := c.api.Query(query, paramIfaces)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +181,7 @@ func (c *Conn) QueryContext(ctx context.Context, query string, args []driver.Nam
 
 // Ping implements driver.Pinger
 func (c *Conn) Ping(ctx context.Context) error {
-	if c.adapter == nil {
+	if c.api == nil {
 		return driver.ErrBadConn
 	}
 
@@ -280,18 +276,18 @@ func (c *Conn) GetVFSType() VFSType {
 
 // Dump exports the database as SQL statements
 func (c *Conn) Dump(ctx context.Context) (string, error) {
-	if c.adapter == nil {
+	if c.api == nil {
 		return "", driver.ErrBadConn
 	}
 
-	return c.adapter.Dump()
+	return c.api.Dump()
 }
 
 // Load imports SQL statements to restore the database
 func (c *Conn) Load(ctx context.Context, dump string) error {
-	if c.adapter == nil {
+	if c.api == nil {
 		return driver.ErrBadConn
 	}
 
-	return c.adapter.Load(dump)
+	return c.api.Load(dump)
 }
