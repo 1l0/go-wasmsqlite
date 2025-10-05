@@ -172,13 +172,14 @@ func (b *APIOO) Begin() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	beginMethod := b.sqlite.Get("begin")
-	if beginMethod.IsUndefined() {
-		return fmt.Errorf("sqliteBridge.begin method not found")
+	opts := map[string]any{
+		"sql": `BEGIN IMMEDIATE;`,
 	}
+	b.database.Call("exec", opts)
 
-	_, err := callAsync(beginMethod)
-	return err
+	// TODO: catch errors
+
+	return nil
 }
 
 // Commit commits a transaction
@@ -186,13 +187,14 @@ func (b *APIOO) Commit() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	commitMethod := b.sqlite.Get("commit")
-	if commitMethod.IsUndefined() {
-		return fmt.Errorf("sqliteBridge.commit method not found")
+	opts := map[string]any{
+		"sql": `COMMIT;`,
 	}
+	b.database.Call("exec", opts)
 
-	_, err := callAsync(commitMethod)
-	return err
+	// TODO: catch errors
+
+	return nil
 }
 
 // Rollback rolls back a transaction
@@ -200,13 +202,14 @@ func (b *APIOO) Rollback() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	rollbackMethod := b.sqlite.Get("rollback")
-	if rollbackMethod.IsUndefined() {
-		return fmt.Errorf("sqliteBridge.rollback method not found")
+	opts := map[string]any{
+		"sql": `ROLLBACK;`,
 	}
+	b.database.Call("exec", opts)
 
-	_, err := callAsync(rollbackMethod)
-	return err
+	// TODO: catch errors
+
+	return nil
 }
 
 // Close closes the database connection
@@ -214,51 +217,19 @@ func (b *APIOO) Close() error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	closeMethod := b.sqlite.Get("close")
-	if closeMethod.IsUndefined() {
-		return fmt.Errorf("sqliteBridge.close method not found")
-	}
+	b.database.Call("close")
 
-	_, err := callAsync(closeMethod)
-	return err
+	// TODO: catch errors
+
+	return nil
 }
 
 // Dump exports the database as SQL statements
 func (b *APIOO) Dump() (string, error) {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	dumpMethod := b.sqlite.Get("dump")
-	if dumpMethod.IsUndefined() {
-		return "", fmt.Errorf("sqliteBridge.dump method not found")
-	}
-
-	result, err := callAsync(dumpMethod)
-	if err != nil {
-		return "", err
-	}
-
-	// Extract dump from result
-	if !result.IsUndefined() && !result.IsNull() {
-		dump := result.Get("dump")
-		if dump.Truthy() {
-			return dump.String(), nil
-		}
-	}
-
-	return "", fmt.Errorf("no dump data received")
+	return "", fmt.Errorf("unimplemented")
 }
 
 // Load imports SQL statements to restore the database
 func (b *APIOO) Load(dump string) error {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	loadMethod := b.sqlite.Get("load")
-	if loadMethod.IsUndefined() {
-		return fmt.Errorf("sqliteBridge.load method not found")
-	}
-
-	_, err := callAsync(loadMethod, dump)
-	return err
+	return fmt.Errorf("unimplemented")
 }
