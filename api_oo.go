@@ -68,7 +68,7 @@ func (b *APIOO) Open(path, vfs string) (string, error) {
 func (b *APIOO) Exec(sql string, params []any) (rowsAffected int, lastInsertId int, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("JavaScript exception: %v", r)
+			err = fmt.Errorf("%v", r)
 		}
 	}()
 	b.mu.Lock()
@@ -111,7 +111,7 @@ func (b *APIOO) Exec(sql string, params []any) (rowsAffected int, lastInsertId i
 func (b *APIOO) Query(sql string, params []any) (columns []string, rows [][]any, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("JavaScript exception: %v", r)
+			err = fmt.Errorf("%v", r)
 		}
 	}()
 	b.mu.Lock()
@@ -177,7 +177,7 @@ func (b *APIOO) Query(sql string, params []any) (columns []string, rows [][]any,
 func (b *APIOO) Begin() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("JavaScript exception: %v", r)
+			err = fmt.Errorf("%v", r)
 		}
 	}()
 	b.mu.Lock()
@@ -195,7 +195,7 @@ func (b *APIOO) Begin() (err error) {
 func (b *APIOO) Commit() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("JavaScript exception: %v", r)
+			err = fmt.Errorf("%v", r)
 		}
 	}()
 	b.mu.Lock()
@@ -213,7 +213,7 @@ func (b *APIOO) Commit() (err error) {
 func (b *APIOO) Rollback() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("JavaScript exception: %v", r)
+			err = fmt.Errorf("%v", r)
 		}
 	}()
 	b.mu.Lock()
@@ -231,7 +231,7 @@ func (b *APIOO) Rollback() (err error) {
 func (b *APIOO) Close() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("JavaScript exception: %v", r)
+			err = fmt.Errorf("%v", r)
 		}
 	}()
 	b.mu.Lock()
