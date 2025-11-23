@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"syscall/js"
 
-	database "github.com/sputn1ck/go-wasmsqlite/example/generated"
+	database "github.com/1l0/go-wasmsqlite/example/generated"
 )
 
 func testBlobJS(this js.Value, p []js.Value) interface{} {
