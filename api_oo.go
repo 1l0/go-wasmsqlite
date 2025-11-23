@@ -158,6 +158,10 @@ func (b *APIOO) Query(sql string, params []any) (columns []string, rows [][]any,
 						row[j] = val.String()
 					} else if val.Type() == js.TypeBoolean {
 						row[j] = val.Bool()
+					} else if val.Type() == js.TypeObject && val.Get("constructor").Get("name").String() == "Uint8Array" {
+						b := make([]byte, val.Length())
+						js.CopyBytesToGo(b, val)
+						row[j] = b
 					} else {
 						row[j] = val.String()
 					}
