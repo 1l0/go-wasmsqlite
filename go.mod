@@ -1,4 +1,4 @@
-module github.com/1l0/go-wasmsqlite
+module github.com/nosuta/go-wasmsqlite
 
 go 1.24.4
 

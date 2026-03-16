@@ -10,10 +10,10 @@ import (
 	"log"
 	"syscall/js"
 
-	wasmsqlite "github.com/1l0/go-wasmsqlite"
-	database "github.com/1l0/go-wasmsqlite/example/generated"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
+	wasmsqlite "github.com/nosuta/go-wasmsqlite"
+	database "github.com/nosuta/go-wasmsqlite/example/generated"
 )
 
 //go:embed migrations/*.sql
